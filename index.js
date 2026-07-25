@@ -7,19 +7,13 @@ app.use(express.json());
 
 const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
 
-// Đọc mảng Secret Key & Mật khẩu từ biến môi trường của Render
 const secretKeyString = process.env.PRIVATE_KEY || '[]';
 const SECRET_KEY_ARRAY = JSON.parse(secretKeyString);
-const SECRET_PASS = process.env.SECRET_PASS || 'default_pass';
 
 const MINT_ADDRESS = new PublicKey("HHb2PrZYNwqJLCJGKMvwtsRdc3hZvMBNdpqY5KDofEDo");
 
 app.post('/payout-cdbm', async (req, res) => {
-    const { user_wallet, token_amount, secret_pass } = req.body;
-
-    if (secret_pass !== SECRET_PASS) {
-        return res.status(403).json({ success: false, message: 'Khóa bảo mật không đúng' });
-    }
+    const { user_wallet, token_amount } = req.body;
 
     try {
         if (!SECRET_KEY_ARRAY.length) {
