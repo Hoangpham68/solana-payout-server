@@ -1,43 +1,50 @@
 const express = require('express');
-const cors = require('cors');
-const { Connection, PublicKey, Keypair, clusterApiUrl } = require('@solana/web3.js');
+const cors = require('cors'); 
+const { Connection, Keypair, PublicKey, clusterApiUrl } = require('@solana/web3.js');
 const { getOrCreateAssociatedTokenAccount, transfer } = require('@solana/spl-token');
+const bs58 = require('bs58'); 
 
 const app = express();
-
-// Bật CORS để cho phép kết nối từ WordPress
-app.use(cors());
 app.use(express.json());
+app.use(cors()); 
 
-// Kết nối với mạng Solana (Mainnet)
-const connection = new Connection(clusterApiUrl('mainnet-beta'));
+// Kết nối mạng thử nghiệm (Devnet)
+const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
 
-const secretKeyString = process.env.PRIVATE_KEY;
-const SECRET_KEY_ARRAY = JSON.parse(secretKeyString || '[]');
+// ⚠️ ĐIỀN THÔNG TIN VÍ VÀ TOKEN CỦA CÔ CHÚ VÀO GIỮA CÁC DẤU NHÁY KÉP ""
+const PRIVATE_KEY_BASE58 = "THAY_PRIVATE_KEY_CỦA_CÔ_CHÚ_VÀO_ĐÂY"; 
+const TOKEN_MINT_ADDRESS_STR = "THAY_MÃ_MINT_TOKEN_VÀO_ĐÂY";
 
-const MINT_ADDRESS = new PublicKey("HHb2... "); // Thay bằng Mint Address Token của bạn nếu cần
+const fromWallet = Keypair.fromSecretKey(bs58.decode(PRIVATE_KEY_BASE58));
+const TOKEN_MINT_ADDRESS = new PublicKey(TOKEN_MINT_ADDRESS_STR);
 
-app.post('/payout-cdbm', async (req, res) => {
-    const { user_wallet, token_amount } = req.body;
-
+app.post('/api/payout', async (req, res) => {
     try {
-        if (!SECRET_KEY_ARRAY.length) {
-            throw new Error('Chưa cấu hình PRIVATE_KEY trong biến môi trường Render!');
+        const { userWalletAddress, amount } = req.body;
+        if (!userWalletAddress || !amount) {
+            return res.status(400).json({ success: false, error: "Thiếu địa chỉ ví hoặc số lượng" });
         }
-
-        const payer = Keypair.fromSecretKey(Uint8Array.from(SECRET_KEY_ARRAY));
-        const toPublicKey = new PublicKey(user_wallet);
-
-        // Code xử lý chuyển token sẽ tiếp tục thực thi ở đây...
-        
-        res.json({ success: true, message: 'Gửi yêu cầu thành công!' });
+        const toWalletPublicKey = new PublicKey(userWalletAddress);
+        const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
+            connection, fromWallet, TOKEN_MINT_ADDRESS, fromWallet.publicKey
+        );
+        const toTokenAccount = await getOrCreateAssociatedTokenAccount(
+            connection, fromWallet, TOKEN_MINT_ADDRESS, toWalletPublicKey
+        );
+        const txHash = await transfer(
+            connection,
+            fromWallet,
+            fromTokenAccount.address,
+            toTokenAccount.address,
+            fromWallet.publicKey,
+            parseInt(amount) 
+        );
+        return res.json({ success: true, txHash: txHash });
     } catch (error) {
-        console.error('Lỗi Payout:', error);
-        res.status(500).json({ success: false, error: error.message });
+        console.error("Lỗi xử lý:", error);
+        return res.status(500).json({ success: false, error: error.message });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server chạy mượt mà tại port ${PORT}`));
