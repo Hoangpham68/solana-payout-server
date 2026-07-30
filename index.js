@@ -8,56 +8,64 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// Kết nối mạng thử nghiệm (Devnet) hoặc Mainnet tùy cấu hình
+// Kết nối mạng thử nghiệm (Devnet)
 const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
 
-// 💡 Đọc Private Key từ biến môi trường (Render Environment Variable)
-// Nếu không có biến môi trường thì lấy chuỗi mặc định
+// 1. Đọc Private Key an toàn
 const rawPrivateKey = (process.env.PRIVATE_KEY || '').trim();
-
-let fromWallet;
+let fromWallet = null;
 
 if (rawPrivateKey) {
   try {
     if (rawPrivateKey.startsWith('[')) {
-      // Dành cho dạng mảng số: [12, 34, 56, ...]
       const secretKeyArray = Uint8Array.from(JSON.parse(rawPrivateKey));
       fromWallet = Keypair.fromSecretKey(secretKeyArray);
     } else {
-      // Dành cho dạng chuỗi Base58
       const secretKeyArray = bs58.decode(rawPrivateKey);
       fromWallet = Keypair.fromSecretKey(secretKeyArray);
     }
-    console.log("✅ Load ví thành công! Địa chỉ ví:", fromWallet.publicKey.toBase58());
+    console.log("✅ Load VÍ THÀNH CÔNG! Địa chỉ:", fromWallet.publicKey.toBase58());
   } catch (err) {
-    console.error("❌ Lỗi decode Private Key:", err.message);
+    console.error("❌ LỖI VÍ: Mã PRIVATE_KEY bị sai định dạng!", err.message);
   }
 } else {
-  console.warn("⚠️ CẢNH BÁO: Chưa tìm thấy biến môi trường PRIVATE_KEY!");
+  console.warn("⚠️ CẢNH BÁO: Bạn chưa nhập PRIVATE_KEY ở mục Environment trên Render!");
 }
 
-// Mã Mint của Token (Lấy từ biến môi trường TOKEN_MINT hoặc điền trực tiếp nếu muốn)
+// 2. Đọc Token Mint Address an toàn (Không bao giờ gây sập server)
 const TOKEN_MINT_STR = (process.env.TOKEN_MINT_ADDRESS || '').trim();
 let TOKEN_MINT_ADDRESS = null;
+
 if (TOKEN_MINT_STR) {
-  TOKEN_MINT_ADDRESS = new PublicKey(TOKEN_MINT_STR);
+  try {
+    TOKEN_MINT_ADDRESS = new PublicKey(TOKEN_MINT_STR);
+    console.log("✅ Load TOKEN MINT THÀNH CÔNG!");
+  } catch (err) {
+    console.error("❌ LỖI TOKEN: Mã TOKEN_MINT_ADDRESS bị sai định dạng!");
+  }
+} else {
+  console.warn("⚠️ CẢNH BÁO: Bạn chưa nhập TOKEN_MINT_ADDRESS ở mục Environment trên Render!");
 }
 
 app.post('/api/payout', async (req, res) => {
   try {
     const { userWalletAddress, amount } = req.body;
+    
     if (!userWalletAddress || !amount) {
       return res.status(400).json({ success: false, error: 'Thiếu userWalletAddress hoặc amount' });
     }
 
     if (!fromWallet) {
-      return res.status(500).json({ success: false, error: 'Server chưa cấu hình PRIVATE_KEY hợp lệ!' });
+      return res.status(500).json({ success: false, error: 'Server chưa nhận được PRIVATE_KEY hợp lệ!' });
+    }
+
+    if (!TOKEN_MINT_ADDRESS) {
+      return res.status(500).json({ success: false, error: 'Server chưa nhận được TOKEN_MINT_ADDRESS hợp lệ!' });
     }
 
     const toWalletPublicKey = new PublicKey(userWalletAddress);
 
-    // Code xử lý Payout tiếp theo của bạn...
-    return res.json({ success: true, message: 'Yêu cầu payout đã nhận' });
+    return res.json({ success: true, message: 'Yêu cầu payout đã nhận thành công!' });
 
   } catch (error) {
     console.error("Lỗi khi xử lý payout:", error);
@@ -65,7 +73,7 @@ app.post('/api/payout', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`Server đang chạy trên port ${PORT}`);
+  console.log(`🚀 Server đang chạy thành công trên port ${PORT}`);
 });
