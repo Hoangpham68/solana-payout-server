@@ -77,3 +77,19 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy thành công trên port ${PORT}`);
 });
+// === QUY TẮC TỰ ĐỘNG DUYỆT YÊU CẦU RÚT TOKEN ===
+const TU_DUYET = {
+  DIEM_TOI_THIEU: 500,
+  YEU_CAU_EMAIL_XAC_MINH: true,
+  YEU_CAU_VI_HOP_LE: true
+};
+
+function kiemTraTuDuyet(yc) {
+  return (
+    yc.tongDiem >= TU_DUYET.DIEM_TOI_THIEU &&
+    yc.emailDaXacMinh === TU_DUYET.YEU_CAU_EMAIL_XAC_MINH &&
+    yc.viSolanaHopLe === TU_DUYET.YEU_CAU_VI_HOP_LE
+  );
+}
+
+module.exports = { TU_DUYET, kiemTraTuDuyet };
