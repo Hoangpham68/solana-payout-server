@@ -65,6 +65,18 @@ app.post('/api/payout', async (req, res) => {
 
     const toWalletPublicKey = new PublicKey(userWalletAddress);
 
+
+// Tự động duyệt nếu đủ điều kiện
+const yeuCau = {
+  tongDiem: amount,
+  emailDaXacMinh: true,
+  viSolanaHopLe: true
+};
+if (kiemTraTuDuyet(yeuCau)) {
+  console.log("✅ Yêu cầu đủ điều kiện → TỰ ĐỘNG DUYỆT");
+}
+
+
     return res.json({ success: true, message: 'Yêu cầu payout đã nhận thành công!' });
 
   } catch (error) {
