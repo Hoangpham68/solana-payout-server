@@ -74,8 +74,8 @@ const yeuCau = {
 };
 if (kiemTraTuDuyet(yeuCau)) {
   console.log("✅ Yêu cầu đủ điều kiện → TỰ ĐỘNG DUYỆT");
+  yeuCau.trangThai = "da_duyet";
 }
-
 
     return res.json({ success: true, message: 'Yêu cầu payout đã nhận thành công!' });
 
