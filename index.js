@@ -75,7 +75,7 @@ const yeuCau = {
 if (kiemTraTuDuyet(yeuCau)) {
   console.log("✅ Yêu cầu đủ điều kiện → TỰ ĐỘNG DUYỆT");
   yeuCau.trangThai = "da_duyet";
-}
+console.log("🚀 Đang gửi CDBM đến ví:", userWalletAddress);}
 
     return res.json({ success: true, message: 'Yêu cầu payout đã nhận thành công!' });
 
