@@ -76,7 +76,12 @@ app.post('/rut-token', async (req, res) => {
     return res.json({thanhCong: false, thongBao: "Lỗi hệ thống: "+loi.message});
   }
 });
-
+// === Kết nối thư mục & hiển thị giao diện đa ngôn ngữ ===
+const path = require('path');
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 // === KHỞI ĐỘNG MÁY CHỦ ===
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
