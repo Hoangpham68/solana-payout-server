@@ -1,4 +1,3 @@
-https://api.mainnet-beta.solana.com
 const express = require('express');
 const cors = require('cors');
 const { Connection, Keypair, PublicKey, Transaction, sendAndConfirmTransaction } = require('@solana/web3.js');
