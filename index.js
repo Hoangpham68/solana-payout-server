@@ -16,7 +16,7 @@ const connection = new Connection(RPC_URL, 'confirmed');
 // 2. KHỞI TẠO VÍ NGUỒN PHÁT TOKEN
 let fromWallet;
 const rawSecret = process.env.PRIVATE_KEY || process.env.SOLANA_SECRET_KEY || process.env.SOLANA_PRIVATE_KEY || '';
-const tokenMintAddress = process.env.MINT_ADDRESS || process.env.TOKEN_MINT_ADDRESS || 'HHb2PrZYNaqJLCJGKMvwtsRdc3hZvMBNdoqYSKDoFEdO';
+const tokenMintAddress = process.env.MINT_ADDRESS || process.env.TOKEN_MINT_ADDRESS || 'HHb2PrZYNwqJLCJKGMvwtsRdc3hZvMBNdoqYSKDoFEdO';
 
 if (!rawSecret) {
   console.error("❌ LỖI: Chưa cài đặt biến môi trường PRIVATE_KEY trên Render!");
@@ -35,7 +35,7 @@ try {
   process.exit(1);
 }
 
-// 3. API XỬ LÝ DUYỆT LỆNH CHUYỂN TOKEN TỰ ĐỘNG KHỚP VỚI WEB APP
+// 3. API XỬ LÝ DUYỆT LỆNH CHUYỂN TOKEN TỰ ĐỘNG
 app.post('/api/payout', async (req, res) => {
   try {
     const { wallet, amount } = req.body;
@@ -52,7 +52,6 @@ app.post('/api/payout', async (req, res) => {
     const toPublicKey = new PublicKey(wallet);
     const mintPublicKey = new PublicKey(tokenMintAddress);
 
-    // Tìm hoặc tạo tài khoản Token Associated (ATA) cho ví gửi & ví nhận
     const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
       connection, 
       fromWallet, 
@@ -67,22 +66,20 @@ app.post('/api/payout', async (req, res) => {
       toPublicKey
     );
 
-    // Tính số lượng Lamports (mặc định 9 decimals cho SPL Token)
     const decimals = parseInt(process.env.TOKEN_DECIMALS || '9', 10);
     const amountInLamports = BigInt(Math.round(amount * Math.pow(10, decimals)));
 
-    // Tạo lệnh chuyển Token
     const transferInstruction = createTransferInstruction(
       fromTokenAccount.address,
       toTokenAccount.address,
       fromWallet.publicKey,
       amountInLamports
-    );const transaction = new Transaction().add(transferInstruction);
+    );
 
-    // Ký điện tử và phát sóng giao dịch on-chain
+    const transaction = new Transaction().add(transferInstruction);
+
     const signature = await sendAndConfirmTransaction(connection, transaction, [fromWallet]);
     console.log(`✅ CHUYỂN TOKEN TỰ ĐỘNG THÀNH CÔNG! Mã Tx: ${signature}`);
-
     return res.json({
       success: true,
       status: "approved",
@@ -99,7 +96,6 @@ app.post('/api/payout', async (req, res) => {
   }
 });
 
-// Khởi chạy server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server payout tự động đang chạy tại cổng ${PORT}`);
