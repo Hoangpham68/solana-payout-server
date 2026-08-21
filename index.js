@@ -7,7 +7,18 @@ const bs58 = require('bs58');
 const app = express();
 app.use(cors());
 app.use(express.json());
+// === MỞ TRANG CHỦ KHÔNG CẦN ĐĂNG NHẬP ===
+const trangMo = ['/', '/index.html'];
 
+app.use((req, res, next) => {
+  if (trangMo.includes(req.path)) {
+    return next();
+  }
+  if (!req.session || !req.session.user) {
+    return res.redirect('/login.html');
+  }
+  next();
+});
 // 1. KẾT NỐI MẠNG LƯỚI SOLANA MAINNET
 const RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 const connection = new Connection(RPC_URL, 'confirmed');
