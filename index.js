@@ -7,13 +7,26 @@ const bs58 = require('bs58');
 const app = express();
 app.use(cors());
 app.use(express.json());
-// === MỞ TRANG CHỦ KHÔNG CẦN ĐĂNG NHẬP ===
-const trangMo = ['/', '/index.html'];
+// ==// === MỞ TRANG CHỦ & TRANG THÔNG TIN KHÔNG CẦN ĐĂNG NHẬP ===
+const trangMo = [
+  '/',
+  '/index.html',
+  '/gioithieu.html',
+  '/chinhsach.html',
+  '/dieukhoan.html',
+  '/lienhe.html'
+];
 
 app.use((req, res, next) => {
+  // Luôn mở các trang công khai — Google bot xem được
   if (trangMo.includes(req.path)) {
     return next();
   }
+  // Cho phép truy cập file tĩnh (ảnh, css, js)
+  if (req.path.startsWith('/public/') || req.path.endsWith('.css') || req.path.endsWith('.js') || req.path.endsWith('.png') || req.path.endsWith('.jpg')) {
+    return next();
+  }
+  // Các trang khác yêu cầu đăng nhập
   if (!req.session || !req.session.user) {
     return res.redirect('/login.html');
   }
